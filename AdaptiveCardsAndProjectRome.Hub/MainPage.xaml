@@ -12,6 +12,7 @@
               Padding="40,40,40,64"
               VerticalAlignment="Top"
               Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
-              CornerRadius="24" />
+              CornerRadius="24"
+              Visibility="Collapsed" />
     </Grid>
 </Page>

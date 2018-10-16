@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Windows.Foundation.Collections;
 using Windows.System.RemoteSystems;
 
@@ -25,7 +26,7 @@ namespace AdaptiveCardsAndProjectRome.Shared
 
         public static List<RemoteSystemSessionInfo> AvailableSessions = new List<RemoteSystemSessionInfo>();
 
-        public static async void CreateSession()
+        public static async Task CreateSessionAsync()
         {
             var status = await RemoteSystem.RequestAccessAsync();
             if (status == RemoteSystemAccessStatus.Allowed)
@@ -34,16 +35,20 @@ namespace AdaptiveCardsAndProjectRome.Shared
                 _sessionController.JoinRequested += SessionController_JoinRequested;
 
                 var result = await _sessionController.CreateSessionAsync();
-                DebugString($"Create Session {result.Status}: {result.Session.ControllerDisplayName} {result.Session.DisplayName} {result.Session.Id}");
-                _currentSession?.Dispose();
-                _currentSession = result.Session;
 
-                _mediaChannel = new RemoteSystemSessionMessageChannel(_currentSession, ChannelName);
-                _mediaChannel.ValueSetReceived += OnChannelValueSetReceived;
+                if (result.Status == RemoteSystemSessionCreationStatus.Success)
+                {
+                    DebugString($"Create Session {result.Status}: {result.Session.ControllerDisplayName} {result.Session.DisplayName} {result.Session.Id}");
+                    _currentSession?.Dispose();
+                    _currentSession = result.Session;
+
+                    _mediaChannel = new RemoteSystemSessionMessageChannel(_currentSession, ChannelName);
+                    _mediaChannel.ValueSetReceived += OnChannelValueSetReceived;
+                }
             }
         }
 
-        public static async void DiscoverSessions()
+        public static async Task DiscoverSessionsAsync()
         {
             var status = await RemoteSystem.RequestAccessAsync();
             if (status == RemoteSystemAccessStatus.Allowed)
@@ -60,7 +65,7 @@ namespace AdaptiveCardsAndProjectRome.Shared
             }
         }
 
-        public static async void JoinSession(RemoteSystemSessionInfo sessionInfo)
+        public static async Task JoinSessionAsync(RemoteSystemSessionInfo sessionInfo)
         {
             var info = await sessionInfo.JoinAsync();
             if (info.Status == RemoteSystemSessionJoinStatus.Success)

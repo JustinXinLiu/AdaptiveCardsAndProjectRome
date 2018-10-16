@@ -13,7 +13,16 @@
               VerticalAlignment="Top"
               Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
               CornerRadius="24"
-              Tapped="OnCardContainerTapped"
               Holding="OnCardContainerHolding" />
+
+        <TextBlock x:Name="ConnectedText"
+                   Margin="24"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   FontFamily="Tw Cen MT"
+                   FontSize="32"
+                   FontWeight="Bold"
+                   Text="Connected!"
+                   Visibility="Collapsed" />
     </Grid>
 </Page>

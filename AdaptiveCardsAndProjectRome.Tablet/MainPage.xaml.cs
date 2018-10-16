@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Windows.Devices.Input;
+using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -21,7 +23,8 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
             RenderAdaptiveCard();
 
-            RomeShare.DiscoverSessions();
+            RomeShare.OnSessionListUpdated += OnSessionListUpdated;
+            Loaded += async (s, e) => await RomeShare.DiscoverSessionsAsync();
         }
 
         private void RenderAdaptiveCard()
@@ -119,14 +122,20 @@ namespace AdaptiveCardsAndProjectRome.Tablet
                 var bitmap = new RenderTargetBitmap();
                 var cardCopy = bitmap.RenderAsync(CardContainer);
 
-                // This "copy" should be placed at the same position to start with.
+                // TODO: This "copy" should be placed at the same position to start with.
                 RomeShare.SendData(_cardJson, position);
             }
         }
 
-        private void OnCardContainerTapped(object sender, TappedRoutedEventArgs e)
+        private async void OnSessionListUpdated(object sender, EventArgs e)
         {
-            RomeShare.JoinSession(RomeShare.AvailableSessions.First());
+            // TODO: Need to handle session lost.
+
+            await RomeShare.JoinSessionAsync(RomeShare.AvailableSessions.First());
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                ConnectedText.Visibility = Visibility.Visible
+            );
         }
     }
 }

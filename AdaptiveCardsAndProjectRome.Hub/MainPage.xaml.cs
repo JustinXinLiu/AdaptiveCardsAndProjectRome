@@ -14,7 +14,7 @@ namespace AdaptiveCardsAndProjectRome.Hub
             InitializeComponent();
 
             RomeShare.OnSetMediaData += OnSetMediaData;
-            RomeShare.CreateSession();
+            Loaded += async (s, e) => await RomeShare.CreateSessionAsync();
         }
 
         private void OnSetMediaData(object sender, string cardJson, TimeSpan mediaPlayedPosition)
@@ -53,6 +53,13 @@ namespace AdaptiveCardsAndProjectRome.Hub
                 element.Loaded += (s, e) =>
                 {
                     var mediaElement = element.Children().OfType<MediaElement>().Single();
+                    // mediaElement.Source is null here.
+
+                    //mediaElement.MediaOpened += (o, a) =>
+                    //{
+                    //    mediaElement.Position = mediaPlayedPosition;
+                    //    mediaElement.Play();
+                    //};
                     mediaElement.Position = mediaPlayedPosition;
                     mediaElement.Play();
 
@@ -60,6 +67,7 @@ namespace AdaptiveCardsAndProjectRome.Hub
                     IsHitTestVisible = true;
                 };
                 CardContainer.Children.Add(element);
+                CardContainer.Visibility = Visibility.Visible;
             }
         }
     }
