@@ -8,7 +8,7 @@
 
     <Grid x:Name="LayoutRoot">
         <Grid x:Name="CardContainer"
-              Margin="80"
+              Margin="120"
               Padding="40,40,40,64"
               VerticalAlignment="Top"
               Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"

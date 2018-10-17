@@ -7,13 +7,25 @@
       mc:Ignorable="d">
 
     <Grid x:Name="LayoutRoot">
-        <Grid x:Name="CardContainer"
-              Margin="80"
-              Padding="40,40,40,64"
-              VerticalAlignment="Top"
-              Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
-              CornerRadius="24"
-              Holding="OnCardContainerHolding" />
+        <Grid x:Name="CardsHost">
+            <Border Margin="120">
+                <Grid x:Name="Card">
+                    <Border x:Name="CardChrome"
+                            Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"
+                            CornerRadius="24"
+                            Holding="OnCardChromeHolding"
+                            PointerPressed="OnCardChromePointerPressed" />
+                    <Border x:Name="MediaContainer" Margin="40,40,40,64" />
+                </Grid>
+            </Border>
+            <Border Margin="120">
+                <Image x:Name="MediaCopy"
+                       Canvas.ZIndex="1"
+                       IsHitTestVisible="False"
+                       Opacity="0"
+                       Stretch="None" />
+            </Border>
+        </Grid>
 
         <TextBlock x:Name="ConnectedText"
                    Margin="24"

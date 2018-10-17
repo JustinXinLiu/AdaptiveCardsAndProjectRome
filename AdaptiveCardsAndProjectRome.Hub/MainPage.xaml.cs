@@ -13,13 +13,18 @@ namespace AdaptiveCardsAndProjectRome.Hub
         {
             InitializeComponent();
 
-            RomeShare.OnSetMediaData += OnSetMediaData;
+            RomeShare.MediaDataUpdated += OnMediaDataUpdated;
+            RomeShare.PositionDataUpdated += OnPositionDataUpdated;
             Loaded += async (s, e) => await RomeShare.CreateSessionAsync();
         }
 
-        private void OnSetMediaData(object sender, string cardJson, TimeSpan mediaPlayedPosition)
+        private void OnPositionDataUpdated(object sender, float e)
         {
-            RenderAdaptiveCard(cardJson, mediaPlayedPosition);
+        }
+
+        private void OnMediaDataUpdated(object sender, MediaDataEventArgs e)
+        {
+            RenderAdaptiveCard(e.CardJson, e.MediaPlayedPosition);
         }
 
         private void RenderAdaptiveCard(string cardJson, TimeSpan mediaPlayedPosition)

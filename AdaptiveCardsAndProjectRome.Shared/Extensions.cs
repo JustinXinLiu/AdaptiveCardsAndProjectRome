@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Windows.Foundation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 
@@ -10,7 +11,7 @@ namespace AdaptiveCardsAndProjectRome.Shared
         {
             var list = new List<FrameworkElement>();
 
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
 
@@ -24,5 +25,8 @@ namespace AdaptiveCardsAndProjectRome.Shared
 
             return list;
         }
+
+        public static Point RelativePosition(this UIElement element, UIElement other) =>
+            element.TransformToVisual(other).TransformPoint(new Point(0, 0));
     }
 }

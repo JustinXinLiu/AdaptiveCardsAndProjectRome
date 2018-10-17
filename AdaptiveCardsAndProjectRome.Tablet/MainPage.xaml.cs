@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
 using Windows.Devices.Input;
+using Windows.UI.Composition;
+using Windows.UI.Composition.Interactions;
 using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
@@ -9,22 +14,56 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using AdaptiveCards.Rendering.Uwp;
 using AdaptiveCardsAndProjectRome.Shared;
+using Microsoft.Toolkit.Uwp.UI.Animations;
+using Microsoft.Toolkit.Uwp.UI.Animations.Expressions;
+using Microsoft.Toolkit.Uwp.UI.Extensions;
+//using EF = Microsoft.Toolkit.Uwp.UI.Animations.Expressions.ExpressionFunctions;
 
 namespace AdaptiveCardsAndProjectRome.Tablet
 {
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage : Page, IInteractionTrackerOwner
     {
         private MediaElement _mediaElement;
         private string _cardJson;
+        private TimeSpan _mediaPlayedPosition;
+
+        private readonly Compositor _compositor;
+        private readonly InteractionTracker _tracker;
+        private VisualInteractionSource _interactionSource;
+        private readonly CompositionPropertySet _props;
+        private Visual _hitTestVisual;
+        private Visual _mediaCopyVisual;
+        private PointerPoint _pressedPoint;
+        private float _maxDistance;
 
         public MainPage()
         {
             InitializeComponent();
 
+            _compositor = Window.Current.Compositor;
+            _tracker = InteractionTracker.CreateWithOwner(_compositor, this);
+            _props = _compositor.CreatePropertySet();
+
             RenderAdaptiveCard();
 
-            RomeShare.OnSessionListUpdated += OnSessionListUpdated;
+            RomeShare.SessionListUpdated += OnSessionListUpdated;
             Loaded += async (s, e) => await RomeShare.DiscoverSessionsAsync();
+
+            // When the size of the app changes, we need to update all the measures.
+            SizeChanged += (s, e) =>
+            {
+                if (_hitTestVisual != null)
+                {
+                    _hitTestVisual.Size = Card.RenderSize.ToVector2();
+
+                    var distanceFromTop = (float)Card.RelativePosition(this).Y;
+                    _maxDistance = distanceFromTop + _hitTestVisual.Size.Y;
+                    _tracker.MaxPosition = new Vector3(_maxDistance);
+
+                    var trackerNode = _tracker.GetReference();
+                    _props.StartAnimation("Progress", trackerNode.Position.Y / _tracker.MaxPosition.Y);
+                }
+            };
         }
 
         private void RenderAdaptiveCard()
@@ -67,8 +106,10 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
                     // Now the UI is ready.
                     IsHitTestVisible = true;
+
+                    SetupInteractionTracker();
                 };
-                CardContainer.Children.Add(element);
+                MediaContainer.Child = element;
             }
         }
 
@@ -106,7 +147,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
             return card.ToJson().ToString();
         }
 
-        private void OnCardContainerHolding(object sender, HoldingRoutedEventArgs e)
+        private async void OnCardChromeHolding(object sender, HoldingRoutedEventArgs e)
         {
             if (e.PointerDeviceType == PointerDeviceType.Touch && e.HoldingState == HoldingState.Started)
             {
@@ -114,17 +155,125 @@ namespace AdaptiveCardsAndProjectRome.Tablet
                 _mediaElement.Pause();
 
                 // Record the location as we want to resume from here on another device.
-                var position = _mediaElement.Position;
+                _mediaPlayedPosition = _mediaElement.Position;
 
                 // We don't want to visually move the video player. Instead, we want to create the illusion that
                 // a "copy" of it is being dragged down to another device. So here we use RenderTargetBitmap to
                 // create such visual.
                 var bitmap = new RenderTargetBitmap();
-                var cardCopy = bitmap.RenderAsync(CardContainer);
+                await bitmap.RenderAsync(Card);
+                MediaCopy.Source = bitmap;
 
-                // TODO: This "copy" should be placed at the same position to start with.
-                RomeShare.SendData(_cardJson, position);
+                MediaContainer.IsHitTestVisible = false;
+
+                // Create animations to show that a "copy" of the video player is popped up and ready to be dragged up.
+                Card.Fade(0.3f).Start();
+                MediaCopy
+                    .Fade(0.7f, 1)
+                    .Then()
+                    .Scale(0.975f, 0.975f, (float)Card.ActualWidth / 2, (float)Card.ActualHeight / 2, 300d)
+                    .Then()
+                    .Offset(offsetY: -24.0f, duration: 400d)
+                    .Start();
+
+                // Create an animation that changes the offset of the "copy" based on the manipulation progress.
+                _mediaCopyVisual = VisualExtensions.GetVisual(MediaCopy);
+                var offset = _props.GetReference().GetScalarProperty("Progress") * -_maxDistance;
+                _mediaCopyVisual.StartAnimation("Offset.Y", offset);
+
+                try
+                {
+                    // Let InteractionTracker to handle the swipe gesture.
+                    _interactionSource.TryRedirectForManipulation(_pressedPoint);
+
+                    // Send the card json and media played position over using Remote Sessions API.
+                    await RomeShare.SendMediaDataAsync(_cardJson, _mediaPlayedPosition);
+                }
+                catch (UnauthorizedAccessException) { }
             }
+        }
+
+        private void OnCardChromePointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            // We need to store the pressed point 'cause Holding event doesn't tell us that.
+            _pressedPoint = e.GetCurrentPoint(sender as UIElement);
+        }
+
+        private void SetupInteractionTracker()
+        {
+            // Setup the HitTest visual of the InteractionTracker.
+            _hitTestVisual = VisualExtensions.GetVisual(Card);
+            _hitTestVisual.Size = Card.RenderSize.ToVector2();
+            // TODO: Why this doesn't work?
+            //_hitTestVisual.RelativeSizeAdjustment = Vector2.One;
+
+            // In this sample, we only want interactions happening on the Y-axis.
+            _interactionSource = VisualInteractionSource.Create(_hitTestVisual);
+            _interactionSource.PositionYSourceMode = InteractionSourceMode.EnabledWithInertia;
+            _tracker.InteractionSources.Add(_interactionSource);
+
+            // Setup max position of the InteractionTracker.
+            var distanceFromTop = (float)Card.RelativePosition(this).Y;
+            _maxDistance = distanceFromTop + _hitTestVisual.Size.Y;
+            _tracker.MaxPosition = new Vector3(_maxDistance);
+
+            // Initialize the manipulation progress.
+            // Note: In this simple demo, we could have used the trackerNode.Position.Y to manipulate the offset
+            // directly. But we use the manipulation progress here so we could control more things such as the
+            // scale or opacity of the "copy" in the future.
+            _props.InsertScalar("Progress", 0);
+
+            // Create an animation that tracks the progress of the manipulation and stores it in a the PropertySet _props
+            var trackerNode = _tracker.GetReference();
+            // Note here we don't want to EF.Clamp the value 'cause we want the overpan which gives a more natural feel
+            // when you pan it.
+            _props.StartAnimation("Progress", trackerNode.Position.Y / _tracker.MaxPosition.Y);
+
+            ConfigureRestingPoints();
+
+            void ConfigureRestingPoints()
+            {
+                // Setup a possible inertia endpoint (snap point) for the InteractionTracker's minimum position.
+                var endpoint1 = InteractionTrackerInertiaRestingValue.Create(_compositor);
+
+                // Use this endpoint when the natural resting position of the interaction is less than the halfway point.
+                var trackerTarget = ExpressionValues.Target.CreateInteractionTrackerTarget();
+                endpoint1.SetCondition(trackerTarget.NaturalRestingPosition.Y < (trackerTarget.MaxPosition.Y - trackerTarget.MinPosition.Y) / 2);
+
+                // Set the result for this condition to make the InteractionTracker's y position the minimum y position.
+                endpoint1.SetRestingValue(trackerTarget.MinPosition.Y);
+
+                // Setup a possible inertia endpoint (snap point) for the InteractionTracker's maximum position.
+                var endpoint2 = InteractionTrackerInertiaRestingValue.Create(_compositor);
+
+                // Use this endpoint when the natural resting position of the interaction is more than the halfway point.
+                endpoint2.SetCondition(trackerTarget.NaturalRestingPosition.Y >= (trackerTarget.MaxPosition.Y - trackerTarget.MinPosition.Y) / 2);
+
+                // Set the result for this condition to make the InteractionTracker's y position the maximum y position.
+                endpoint2.SetRestingValue(trackerTarget.MaxPosition.Y);
+
+                _tracker.ConfigurePositionYInertiaModifiers(new InteractionTrackerInertiaModifier[] { endpoint1, endpoint2 });
+            }
+        }
+
+        private async Task ResetMediaCopyAsync()
+        {
+            CardsHost.IsHitTestVisible = false;
+
+            // Reset the opacity, scale and position of the "copy" and fade in the real video player.
+            await MediaCopy
+                .Offset(offsetY: 0.0f, duration: 300d)
+                .Scale(1.0f, 1.0f, (float)Card.ActualWidth / 2, (float)Card.ActualHeight / 2, 300d)
+                .StartAsync();
+
+            MediaCopy.Fade(0.0f, 400d).Start();
+            await Card.Fade(1.0f, 400d).StartAsync();
+
+            // Reset the InteractionTracker's position.
+            _tracker.TryUpdatePosition(Vector3.Zero);
+
+            CardsHost.IsHitTestVisible = true;
+            MediaContainer.IsHitTestVisible = true;
         }
 
         private async void OnSessionListUpdated(object sender, EventArgs e)
@@ -136,6 +285,41 @@ namespace AdaptiveCardsAndProjectRome.Tablet
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 ConnectedText.Visibility = Visibility.Visible
             );
+        }
+
+        public void CustomAnimationStateEntered(InteractionTracker sender, InteractionTrackerCustomAnimationStateEnteredArgs args)
+        {
+            Debug.WriteLine(nameof(CustomAnimationStateEntered));
+        }
+
+        public async void IdleStateEntered(InteractionTracker sender, InteractionTrackerIdleStateEnteredArgs args)
+        {
+            Debug.WriteLine(nameof(IdleStateEntered));
+
+            await ResetMediaCopyAsync();
+        }
+
+        public void InertiaStateEntered(InteractionTracker sender, InteractionTrackerInertiaStateEnteredArgs args)
+        {
+            Debug.WriteLine(nameof(InertiaStateEntered));
+        }
+
+        public void InteractingStateEntered(InteractionTracker sender, InteractionTrackerInteractingStateEnteredArgs args)
+        {
+            Debug.WriteLine(nameof(InteractingStateEntered));
+        }
+
+        public void RequestIgnored(InteractionTracker sender, InteractionTrackerRequestIgnoredArgs args)
+        {
+            Debug.WriteLine(nameof(RequestIgnored));
+        }
+
+        public async void ValuesChanged(InteractionTracker sender, InteractionTrackerValuesChangedArgs args)
+        {
+            var positionY = args.Position.Y;
+            await RomeShare.SendPositionDataAsync(positionY);
+
+            Debug.WriteLine(positionY);
         }
     }
 }
