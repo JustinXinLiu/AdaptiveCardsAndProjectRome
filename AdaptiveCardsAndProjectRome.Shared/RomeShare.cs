@@ -95,9 +95,10 @@ namespace AdaptiveCardsAndProjectRome.Shared
                     PositionDataUpdated?.Invoke(sender, dragPosition);
                     break;
                 case "MediaData":
-                    var json = args.Message["CardJson"].ToString();
+                    var cardJson = args.Message["CardJson"].ToString();
                     var mediaPlayedPosition = TimeSpan.Parse(args.Message["MediaPlayedPosition"].ToString());
-                    MediaDataUpdated?.Invoke(sender, new MediaDataEventArgs(json, mediaPlayedPosition));
+                    var mediaUrl = args.Message["MediaUrl"].ToString();
+                    MediaDataUpdated?.Invoke(sender, new MediaDataEventArgs(cardJson, mediaPlayedPosition, mediaUrl));
                     break;
             }
         }
@@ -133,7 +134,7 @@ namespace AdaptiveCardsAndProjectRome.Shared
             StatusMessageUpdated?.Invoke(null, v);
         }
 
-        public static async Task SendMediaDataAsync(string cardJson, TimeSpan mediaPlayedPosition)
+        public static async Task SendMediaDataAsync(string cardJson, TimeSpan mediaPlayedPosition, string mediaUrl)
         {
             if (_mediaChannel != null)
             {
@@ -141,7 +142,8 @@ namespace AdaptiveCardsAndProjectRome.Shared
                 {
                     ["Type"] = "MediaData",
                     ["CardJson"] = cardJson,
-                    ["MediaPlayedPosition"] = mediaPlayedPosition
+                    ["MediaPlayedPosition"] = mediaPlayedPosition,
+                    ["MediaUrl"] = mediaUrl
                 };
 
                 await _mediaChannel.BroadcastValueSetAsync(valueSet);
@@ -167,11 +169,13 @@ namespace AdaptiveCardsAndProjectRome.Shared
     {
         public string CardJson { get; set; }
         public TimeSpan MediaPlayedPosition { get; set; }
+        public string MediaUrl { get; set; }
 
-        public MediaDataEventArgs(string cardJson, TimeSpan mediaPlayedPosition)
+        public MediaDataEventArgs(string cardJson, TimeSpan mediaPlayedPosition, string mediaUrl)
         {
             CardJson = cardJson;
             MediaPlayedPosition = mediaPlayedPosition;
+            MediaUrl = mediaUrl;
         }
     }
 

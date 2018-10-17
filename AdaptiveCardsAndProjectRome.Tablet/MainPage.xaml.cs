@@ -4,9 +4,9 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Windows.Devices.Input;
+using Windows.System.RemoteSystems;
 using Windows.UI.Composition;
 using Windows.UI.Composition.Interactions;
-using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -14,6 +14,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using AdaptiveCards.Rendering.Uwp;
 using AdaptiveCardsAndProjectRome.Shared;
+using Microsoft.Toolkit.Uwp.Helpers;
 using Microsoft.Toolkit.Uwp.UI.Animations;
 using Microsoft.Toolkit.Uwp.UI.Animations.Expressions;
 using Microsoft.Toolkit.Uwp.UI.Extensions;
@@ -26,6 +27,10 @@ namespace AdaptiveCardsAndProjectRome.Tablet
         private MediaElement _mediaElement;
         private string _cardJson;
         private TimeSpan _mediaPlayedPosition;
+        private const string PosterUrl = 
+            "https://docs.microsoft.com/en-us/adaptive-cards/content/videoposter.png";
+        private const string MediaUrl =
+            "https://adaptivecardsblob.blob.core.windows.net/assets/AdaptiveCardsOverviewVideo.mp4";
 
         private readonly Compositor _compositor;
         private readonly InteractionTracker _tracker;
@@ -35,6 +40,8 @@ namespace AdaptiveCardsAndProjectRome.Tablet
         private Visual _mediaCopyVisual;
         private PointerPoint _pressedPoint;
         private float _maxDistance;
+
+        private bool _idleStateEntered;
 
         public MainPage()
         {
@@ -132,12 +139,12 @@ namespace AdaptiveCardsAndProjectRome.Tablet
             // Create video media.
             var media = new AdaptiveMedia
             {
-                Poster = "https://docs.microsoft.com/en-us/adaptive-cards/content/videoposter.png",
+                Poster = PosterUrl
             };
             media.Sources.Add(new AdaptiveMediaSource
             {
                 MimeType = "video/mp4",
-                Url = "https://adaptivecardsblob.blob.core.windows.net/assets/AdaptiveCardsOverviewVideo.mp4"
+                Url = MediaUrl
             });
 
             // Add all above to our card.
@@ -187,7 +194,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
                     _interactionSource.TryRedirectForManipulation(_pressedPoint);
 
                     // Send the card json and media played position over using Remote Sessions API.
-                    await RomeShare.SendMediaDataAsync(_cardJson, _mediaPlayedPosition);
+                    await RomeShare.SendMediaDataAsync(_cardJson, _mediaPlayedPosition, MediaUrl);
                 }
                 catch (UnauthorizedAccessException) { }
             }
@@ -278,13 +285,16 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
         private async void OnSessionListUpdated(object sender, EventArgs e)
         {
-            // TODO: Need to handle session lost.
+            if (RomeShare.AvailableSessions.FirstOrDefault() is RemoteSystemSessionInfo session)
+            {
+                await RomeShare.JoinSessionAsync(session);
 
-            await RomeShare.JoinSessionAsync(RomeShare.AvailableSessions.First());
-
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                ConnectedText.Visibility = Visibility.Visible
-            );
+                await DispatcherHelper.ExecuteOnUIThreadAsync(() => ConnectedText.Visibility = Visibility.Visible);
+            }
+            else
+            {
+                await DispatcherHelper.ExecuteOnUIThreadAsync(() => ConnectedText.Visibility = Visibility.Collapsed);
+            }
         }
 
         public void CustomAnimationStateEntered(InteractionTracker sender, InteractionTrackerCustomAnimationStateEnteredArgs args)
@@ -296,6 +306,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
         {
             Debug.WriteLine(nameof(IdleStateEntered));
 
+            _idleStateEntered = true;
             await ResetMediaCopyAsync();
         }
 
@@ -316,10 +327,17 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
         public async void ValuesChanged(InteractionTracker sender, InteractionTrackerValuesChangedArgs args)
         {
-            var positionY = args.Position.Y;
-            await RomeShare.SendPositionDataAsync(positionY);
+            var dragPercent = args.Position.Y / _maxDistance;    
 
-            Debug.WriteLine(positionY);
+            if (_idleStateEntered)
+            {
+                _idleStateEntered = false;
+            }
+            else
+            {
+                Debug.WriteLine(dragPercent);
+                await RomeShare.SendPositionDataAsync(dragPercent);
+            }
         }
     }
 }
