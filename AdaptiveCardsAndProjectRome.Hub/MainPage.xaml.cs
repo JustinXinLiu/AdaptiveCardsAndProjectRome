@@ -9,14 +9,14 @@ using Microsoft.Toolkit.Uwp.UI.Extensions;
 using System.Numerics;
 using Microsoft.Toolkit.Uwp.UI.Animations.Expressions;
 using EF = Microsoft.Toolkit.Uwp.UI.Animations.Expressions.ExpressionFunctions;
+using System.Diagnostics;
 
 namespace AdaptiveCardsAndProjectRome.Hub
 {
     public sealed partial class MainPage : Page
     {
         private readonly Compositor _compositor;
-        private readonly Visual _cardVisual;
-        private float _initialPositionY;
+        private Visual _cardVisual;
         private readonly CompositionPropertySet _progress;
 
         public MainPage()
@@ -24,46 +24,40 @@ namespace AdaptiveCardsAndProjectRome.Hub
             InitializeComponent();
 
             _compositor = Window.Current.Compositor;
-            _cardVisual = VisualExtensions.GetVisual(Card);
-            _cardVisual.RelativeSizeAdjustment = Vector2.One;
-
             _progress = _compositor.CreatePropertySet();
-            _progress.InsertScalar("Progress", 0);
 
             RomeShare.MediaDataUpdated += OnMediaDataUpdated;
             RomeShare.PositionDataUpdated += OnPositionDataUpdated;
 
-            Loaded += async (s, e) =>
-            {
-                SetupExpressionAnimationsForCard();
-
-                _initialPositionY = (float)ActualHeight;
-                ResetCardVisualPosition();
-
-                await RomeShare.CreateSessionAsync();
-            };
+            Loaded += async (s, e) => await RomeShare.CreateSessionAsync();
         }
 
         private void SetupExpressionAnimationsForCard()
         {
-            var progressExpressionNode = _progress.GetReference().GetScalarProperty("Progress");
+            _cardVisual = VisualExtensions.GetVisual(Card);
+            _cardVisual.RelativeSizeAdjustment = Vector2.One;
             _cardVisual.CenterPoint = new Vector3(Card.RenderSize.ToVector2() / 2, 0.0f);
 
+            var initialPositionY = (float)ActualHeight;
+            _cardVisual.Offset = new Vector3(0.0f, initialPositionY, 0.0f);
+
+            _progress.InsertScalar("Progress", 0);
+            var progressExpressionNode = _progress.GetReference().GetScalarProperty("Progress");
+
             // Scale the card visual based on the progress.
-            _cardVisual.StartAnimation("Scale", EF.Vector3(1.0f, 1.0f, 1.0f) * EF.Lerp(1.0f, 0.8f, progressExpressionNode));
+            _cardVisual.StartAnimation("Scale", EF.Vector3(1.0f, 1.0f, 1.0f) * EF.Lerp(0.6f, 1.0f, progressExpressionNode));
+            // Fade in the card visual based on the progress.
+            _cardVisual.StartAnimation("Opacity", EF.Lerp(0.0f, 1.0f, progressExpressionNode));
             // Move the card visual based on the progress.
-            var offset = progressExpressionNode * _initialPositionY;
+            var offset = initialPositionY * (1.0f - progressExpressionNode);
             _cardVisual.StartAnimation("Offset.Y", offset);
         }
 
         private void OnPositionDataUpdated(object sender, float progress)
         {
-            _progress.InsertScalar("Progress", 1.0f - progress);
+            Debug.WriteLine(progress);
 
-            //await Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-            //    () => _progress.InsertScalar("Progress", (float)_progress));
-
-            //_cardVisual.Offset = new Vector3(0.0f, _initialPositionY * (1.0f - e), 0.0f);
+            _progress.InsertScalar("Progress", progress);
         }
 
         private void OnMediaDataUpdated(object sender, MediaDataEventArgs e)
@@ -72,7 +66,6 @@ namespace AdaptiveCardsAndProjectRome.Hub
             if (MediaContainer.Child is UIElement card)
             {
                 card.Visibility = Visibility.Collapsed;
-                ResetCardVisualPosition();
             }
 
             RenderAdaptiveCard(e.CardJson, e.MediaPlayedPosition, e.MediaUrl);
@@ -108,6 +101,8 @@ namespace AdaptiveCardsAndProjectRome.Hub
             {
                 element.Loaded += (s, e) =>
                 {
+                    SetupExpressionAnimationsForCard();
+
                     var mediaElement = element.Children().OfType<MediaElement>().Single();
 
                     // TODO: Why mediaElement.Source is null here?? How do we
@@ -132,8 +127,5 @@ namespace AdaptiveCardsAndProjectRome.Hub
                 Card.Visibility = Visibility.Visible;
             }
         }
-
-        private void ResetCardVisualPosition() =>
-            _cardVisual.Offset = new Vector3(0.0f, _initialPositionY, 0.0f);
     }
 }
