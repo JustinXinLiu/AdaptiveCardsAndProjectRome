@@ -33,7 +33,6 @@ namespace AdaptiveCardsAndProjectRome.Shared
                 _sessionController.JoinRequested += OnSessionControllerJoinRequested;
 
                 var result = await _sessionController.CreateSessionAsync();
-
                 if (result.Status == RemoteSystemSessionCreationStatus.Success)
                 {
                     DebugString($"Create Session {result.Status}: {result.Session.ControllerDisplayName} {result.Session.DisplayName} {result.Session.Id}");

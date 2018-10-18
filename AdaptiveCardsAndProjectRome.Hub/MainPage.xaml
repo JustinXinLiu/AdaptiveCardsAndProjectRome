@@ -1,18 +1,21 @@
 ﻿<Page x:Class="AdaptiveCardsAndProjectRome.Hub.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:animations="using:Microsoft.Toolkit.Uwp.UI.Animations"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:extensions="using:Microsoft.Toolkit.Uwp.UI.Extensions"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
       mc:Ignorable="d">
 
     <Grid x:Name="LayoutRoot">
-        <Grid x:Name="CardContainer"
-              Margin="120"
-              Padding="40,40,40,64"
-              VerticalAlignment="Top"
-              Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
-              CornerRadius="24"
-              Visibility="Collapsed" />
+        <Border Margin="120">
+            <Grid x:Name="Card" Visibility="Collapsed">
+                <Border x:Name="CardChrome"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="24" />
+                <Border x:Name="MediaContainer" Margin="40,40,40,64" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>
