@@ -9,6 +9,7 @@
 
     <Grid x:Name="LayoutRoot">
         <Grid x:Name="CardsHost">
+            <!--  Insert Border to workaround XAML-COMP interop with property sharing.  -->
             <Border Margin="120">
                 <Grid x:Name="Card">
                     <Border x:Name="CardChrome"
@@ -19,6 +20,7 @@
                     <Border x:Name="MediaContainer" Margin="40,40,40,64" />
                 </Grid>
             </Border>
+            <!--  Insert Border to workaround XAML-COMP interop with property sharing.  -->
             <Border Margin="120">
                 <Image x:Name="MediaCopy"
                        Canvas.ZIndex="1"
@@ -48,8 +50,8 @@
                                              Duration="0:0:0.4" />
             </animations:Implicit.ShowAnimations>
             <animations:Implicit.HideAnimations>
-                <animations:TranslationAnimation From="0,12,0"
-                                                 To="0,0,0"
+                <animations:TranslationAnimation From="0,0,0"
+                                                 To="0,12,0"
                                                  Duration="0:0:0.3" />
                 <animations:OpacityAnimation From="1"
                                              To="0"

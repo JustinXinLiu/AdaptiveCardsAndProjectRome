@@ -9,6 +9,7 @@
       mc:Ignorable="d">
 
     <Grid x:Name="LayoutRoot">
+        <!--  Insert Border to workaround XAML-COMP interop with property sharing.  -->
         <Border Margin="120">
             <Grid x:Name="Card" Visibility="Collapsed">
                 <Border x:Name="CardChrome"
