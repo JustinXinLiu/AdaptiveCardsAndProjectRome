@@ -11,7 +11,7 @@ using Microsoft.Toolkit.Uwp.UI.Animations.Expressions;
 using EF = Microsoft.Toolkit.Uwp.UI.Animations.Expressions.ExpressionFunctions;
 using System.Diagnostics;
 
-namespace AdaptiveCardsAndProjectRome.Hub
+namespace AdaptiveCardsAndProjectRome.Receiver
 {
     public sealed partial class MainPage : Page
     {

@@ -20,14 +20,14 @@ using Microsoft.Toolkit.Uwp.UI.Animations.Expressions;
 using Microsoft.Toolkit.Uwp.UI.Extensions;
 //using EF = Microsoft.Toolkit.Uwp.UI.Animations.Expressions.ExpressionFunctions;
 
-namespace AdaptiveCardsAndProjectRome.Tablet
+namespace AdaptiveCardsAndProjectRome.Sender
 {
     public sealed partial class MainPage : Page, IInteractionTrackerOwner
     {
         private MediaElement _mediaElement;
         private string _cardJson;
         private TimeSpan _mediaPlayedPosition;
-        private const string PosterUrl = 
+        private const string PosterUrl =
             "https://docs.microsoft.com/en-us/adaptive-cards/content/videoposter.png";
         private const string MediaUrl =
             "https://adaptivecardsblob.blob.core.windows.net/assets/AdaptiveCardsOverviewVideo.mp4";
@@ -185,8 +185,8 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
                 // Create an animation that changes the offset of the "copy" based on the manipulation progress.
                 _mediaCopyVisual = VisualExtensions.GetVisual(MediaCopy);
-                var offset = _progress.GetReference().GetScalarProperty("Progress") * -_maxDistance;
-                _mediaCopyVisual.StartAnimation("Offset.Y", offset);
+                var progressExpressionNode = _progress.GetReference().GetScalarProperty("Progress");
+                _mediaCopyVisual.StartAnimation("Offset.Y", progressExpressionNode * -_maxDistance);
 
                 try
                 {
@@ -327,7 +327,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
         public async void ValuesChanged(InteractionTracker sender, InteractionTrackerValuesChangedArgs args)
         {
-            var dragPercent = args.Position.Y / _maxDistance;    
+            var dragPercent = args.Position.Y / _maxDistance;
 
             if (_idleStateEntered)
             {

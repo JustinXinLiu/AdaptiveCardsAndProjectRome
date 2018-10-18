@@ -3,7 +3,7 @@
   <Identity Name="43d22cec-3f1a-4a6d-aadd-bc4cb7df4933" Publisher="CN=chuan" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="43d22cec-3f1a-4a6d-aadd-bc4cb7df4933" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>AdaptiveCardsAndProjectRome.Tablet</DisplayName>
+    <DisplayName>AdaptiveCardsAndProjectRome.Receiver</DisplayName>
     <PublisherDisplayName>chuan</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -14,8 +14,8 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="AdaptiveCardsAndProjectRome.Tablet.App">
-      <uap:VisualElements DisplayName="AdaptiveCardsAndProjectRome.Tablet" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="AdaptiveCardsAndProjectRome.Tablet" BackgroundColor="transparent">
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="AdaptiveCardsAndProjectRome.Receiver.App">
+      <uap:VisualElements DisplayName="AdaptiveCardsAndProjectRome.Receiver" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="AdaptiveCardsAndProjectRome.Receiver" BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png">
         </uap:DefaultTile>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />

@@ -1,7 +1,7 @@
 ﻿<Application
-    x:Class="AdaptiveCardsAndProjectRome.Tablet.App"
+    x:Class="AdaptiveCardsAndProjectRome.Receiver.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:AdaptiveCardsAndProjectRome.Tablet">
+    xmlns:local="using:AdaptiveCardsAndProjectRome.Receiver">
 
 </Application>

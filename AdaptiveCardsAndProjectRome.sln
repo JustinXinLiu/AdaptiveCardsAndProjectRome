@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28124.53
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdaptiveCardsAndProjectRome.Hub", "AdaptiveCardsAndProjectRome.Hub\AdaptiveCardsAndProjectRome.Hub.csproj", "{B86D94A0-20BA-420B-845A-7CBD1D174148}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdaptiveCardsAndProjectRome.Receiver", "AdaptiveCardsAndProjectRome.Receiver\AdaptiveCardsAndProjectRome.Receiver.csproj", "{B86D94A0-20BA-420B-845A-7CBD1D174148}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdaptiveCardsAndProjectRome.Tablet", "AdaptiveCardsAndProjectRome.Tablet\AdaptiveCardsAndProjectRome.Tablet.csproj", "{0D75E4AD-488E-408B-AA4B-A5DC90A9233C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdaptiveCardsAndProjectRome.Sender", "AdaptiveCardsAndProjectRome.Sender\AdaptiveCardsAndProjectRome.Sender.csproj", "{0D75E4AD-488E-408B-AA4B-A5DC90A9233C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdaptiveCardsAndProjectRome.Shared", "AdaptiveCardsAndProjectRome.Shared\AdaptiveCardsAndProjectRome.Shared.csproj", "{9EEAC78E-28C7-4FBF-B2E2-DB894AAEC741}"
 EndProject
@@ -98,5 +98,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EF5A229E-C220-48DE-8A28-E8DA982C53B7}
 	EndGlobalSection
 EndGlobal
