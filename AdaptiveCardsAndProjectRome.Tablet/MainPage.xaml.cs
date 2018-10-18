@@ -35,7 +35,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
         private readonly Compositor _compositor;
         private readonly InteractionTracker _tracker;
         private VisualInteractionSource _interactionSource;
-        private readonly CompositionPropertySet _props;
+        private readonly CompositionPropertySet _progress;
         private Visual _hitTestVisual;
         private Visual _mediaCopyVisual;
         private PointerPoint _pressedPoint;
@@ -49,7 +49,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
             _compositor = Window.Current.Compositor;
             _tracker = InteractionTracker.CreateWithOwner(_compositor, this);
-            _props = _compositor.CreatePropertySet();
+            _progress = _compositor.CreatePropertySet();
 
             RenderAdaptiveCard();
 
@@ -68,7 +68,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
                     _tracker.MaxPosition = new Vector3(_maxDistance);
 
                     var trackerNode = _tracker.GetReference();
-                    _props.StartAnimation("Progress", trackerNode.Position.Y / _tracker.MaxPosition.Y);
+                    _progress.StartAnimation("Progress", trackerNode.Position.Y / _tracker.MaxPosition.Y);
                 }
             };
         }
@@ -185,7 +185,7 @@ namespace AdaptiveCardsAndProjectRome.Tablet
 
                 // Create an animation that changes the offset of the "copy" based on the manipulation progress.
                 _mediaCopyVisual = VisualExtensions.GetVisual(MediaCopy);
-                var offset = _props.GetReference().GetScalarProperty("Progress") * -_maxDistance;
+                var offset = _progress.GetReference().GetScalarProperty("Progress") * -_maxDistance;
                 _mediaCopyVisual.StartAnimation("Offset.Y", offset);
 
                 try
@@ -228,13 +228,13 @@ namespace AdaptiveCardsAndProjectRome.Tablet
             // Note: In this simple demo, we could have used the trackerNode.Position.Y to manipulate the offset
             // directly. But we use the manipulation progress here so we could control more things such as the
             // scale or opacity of the "copy" in the future.
-            _props.InsertScalar("Progress", 0);
+            _progress.InsertScalar("Progress", 0);
 
-            // Create an animation that tracks the progress of the manipulation and stores it in a the PropertySet _props
+            // Create an animation that tracks the progress of the manipulation and stores it in a the PropertySet _progress.
             var trackerNode = _tracker.GetReference();
             // Note here we don't want to EF.Clamp the value 'cause we want the overpan which gives a more natural feel
             // when you pan it.
-            _props.StartAnimation("Progress", trackerNode.Position.Y / _tracker.MaxPosition.Y);
+            _progress.StartAnimation("Progress", trackerNode.Position.Y / _tracker.MaxPosition.Y);
 
             ConfigureRestingPoints();
 
